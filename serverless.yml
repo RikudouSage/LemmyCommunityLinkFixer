@@ -29,6 +29,7 @@ provider:
         APP_ENV: ${self:provider.stage}
         APP_SECRET: !Join [ '', [ '{{resolve:secretsmanager:', !Ref AppSecret, ':SecretString:secret}}' ] ]
         DYNAMODB_CACHE_TABLE: !Ref CacheTable
+        LEMMY_PASSWORD: ${env:LEMMY_PASSWORD}
 
 plugins:
     - ./vendor/bref/bref
