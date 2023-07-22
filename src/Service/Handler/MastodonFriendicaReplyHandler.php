@@ -9,7 +9,7 @@ use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\View\CommentView;
 use Rikudou\LemmyApi\Response\View\PostView;
 
-final readonly class MastodonReplyHandler implements ReplyHandler
+final readonly class MastodonFriendicaReplyHandler implements ReplyHandler
 {
     public function __construct(
         private CommentParser $commentParser,
@@ -20,7 +20,7 @@ final readonly class MastodonReplyHandler implements ReplyHandler
 
     public function canHandle(CommentView|PostView $repliable, ?string $software): bool
     {
-        return $software === 'mastodon';
+        return $software === 'mastodon' || $software === 'friendica';
     }
 
     public function handle(CommentView|PostView $repliable, ?string $software): void
