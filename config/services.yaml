@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    lemmy.instance: lemmings.world
+    app.batch_comment_limit: 10
+    app.batch_post_limit: 10
 
 services:
     # default configuration for services in *this* file
@@ -22,3 +25,24 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    api_version:
+        class: Rikudou\LemmyApi\Enum\LemmyApiVersion
+        factory: Rikudou\LemmyApi\Enum\LemmyApiVersion::from
+        arguments:
+            - 'v3'
+
+    Rikudou\LemmyApi\LemmyApi:
+        class: Rikudou\LemmyApi\DefaultLemmyApi
+        arguments:
+            - 'https://%lemmy.instance%'
+            - '@api_version'
+            - '@psr18.http_client'
+            - '@psr18.http_client'
+        calls:
+            - login: [ '%env(LEMMY_USER)%', '%env(LEMMY_PASSWORD)%' ]
+
+    App\Command\RunCommand:
+        arguments:
+            $commentLimit: '%app.batch_comment_limit%'
+            $postLimit: '%app.batch_post_limit%'

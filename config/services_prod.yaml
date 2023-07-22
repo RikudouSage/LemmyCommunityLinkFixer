@@ -1,0 +1,3 @@
+parameters:
+  app.batch_comment_limit: 50
+  app.batch_post_limit: 30
