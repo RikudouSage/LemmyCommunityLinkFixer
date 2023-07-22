@@ -47,7 +47,7 @@ functions:
         runtime: php-82-console
         events:
             - schedule:
-                  rate: rate(1 minute)
+                  rate: rate(2 minutes)
                   input: '"app:run"'
 
 package:
