@@ -37,17 +37,17 @@ final class RunCommand extends Command
             assert(is_int($lastRepliableTime));
         }
 
-//        $community = $this->api->community()->get('bot_playground@lemmings.world');
+        //        $community = $this->api->community()->get('bot_playground@lemmings.world');
 
         $comments = $this->api->comment()->getComments(
-//            community: $community,
+            //            community: $community,
             limit: $this->commentLimit,
             sortType: CommentSortType::New,
             listingType: ListingType::All,
         );
 
         $posts = $this->api->post()->getPosts(
-//            community: $community,
+            //            community: $community,
             limit: $this->postLimit,
             sort: SortType::New,
             listingType: ListingType::All
