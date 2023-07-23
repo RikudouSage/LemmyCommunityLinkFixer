@@ -45,6 +45,7 @@ functions:
     cron:
         handler: bin/console
         timeout: 300 # in seconds
+        memorySize: 256
         runtime: php-82-console
         events:
             - schedule:
