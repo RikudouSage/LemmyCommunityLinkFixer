@@ -4,12 +4,12 @@ namespace App\Command;
 
 use App\Service\NodeInfoParser;
 use App\Service\ReplyHandlerCollection;
+use DateTimeImmutable;
 use Psr\Cache\CacheItemPoolInterface;
 use Rikudou\LemmyApi\Enum\CommentSortType;
 use Rikudou\LemmyApi\Enum\ListingType;
 use Rikudou\LemmyApi\Enum\SortType;
 use Rikudou\LemmyApi\LemmyApi;
-use Rikudou\LemmyApi\Response\View\PostView;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -60,6 +60,9 @@ final class RunCommand extends Command
             if ($post->post->published->getTimestamp() <= $lastRepliableTime) {
                 break;
             }
+            if ($post->post->published->getTimestamp() > (new DateTimeImmutable())->getTimestamp()) {
+                continue;
+            }
             $this->replyHandlers->handle(
                 $post,
                 $this->nodeInfoParser->getSoftware($post->creator->actorId),
@@ -76,6 +79,9 @@ final class RunCommand extends Command
         foreach ($comments as $comment) {
             if ($comment->comment->published->getTimestamp() <= $lastRepliableTime) {
                 break;
+            }
+            if ($comment->comment->published->getTimestamp() > (new DateTimeImmutable())->getTimestamp()) {
+                continue;
             }
             $this->replyHandlers->handle(
                 $comment,
