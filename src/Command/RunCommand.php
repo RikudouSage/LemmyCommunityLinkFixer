@@ -60,7 +60,7 @@ final class RunCommand extends Command
         error_log(count($posts));
         error_log((new \DateTimeImmutable())->setTimestamp($newLastRepliableTime)->format('c'));
         error_log(json_encode(array_map(
-            fn (PostView $post) => $post->post->body,
+            fn (PostView $post) => $post->post->published->format('c'),
             $posts,
         )));
 
