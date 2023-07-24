@@ -56,14 +56,6 @@ final class RunCommand extends Command
 
         $newLastRepliableTime = $lastRepliableTime;
 
-        error_log(count($comments));
-        error_log(count($posts));
-        error_log((new \DateTimeImmutable())->setTimestamp($newLastRepliableTime)->format('c'));
-        error_log(json_encode(array_map(
-            fn (PostView $post) => $post->post->published->format('c'),
-            $posts,
-        )));
-
         foreach ($posts as $post) {
             if ($post->post->published->getTimestamp() <= $lastRepliableTime) {
                 break;
