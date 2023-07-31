@@ -21,7 +21,7 @@ class CommentParserTest extends TestCase
      */
     public function testFindFixedLinks(string $text, callable $test): void
     {
-        $domains = $this->instance->findFixedLinks($text);
+        $domains = $this->instance->findFixedCommunityLinks($text);
         $test($domains);
     }
 

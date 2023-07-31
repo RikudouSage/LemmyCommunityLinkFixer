@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\MentionHandlerCollection;
 use App\Service\NodeInfoParser;
 use App\Service\ReplyHandlerCollection;
 use DateTimeImmutable;
@@ -10,6 +11,9 @@ use Rikudou\LemmyApi\Enum\CommentSortType;
 use Rikudou\LemmyApi\Enum\ListingType;
 use Rikudou\LemmyApi\Enum\SortType;
 use Rikudou\LemmyApi\LemmyApi;
+use Rikudou\LemmyApi\Response\Model\Comment;
+use Rikudou\LemmyApi\Response\Model\Post;
+use Rikudou\LemmyApi\Response\View\CommentView;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,6 +28,7 @@ final class RunCommand extends Command
         private readonly int $postLimit,
         private readonly CacheItemPoolInterface $cache,
         private readonly ReplyHandlerCollection $replyHandlers,
+        private readonly MentionHandlerCollection $mentionHandlers,
         private readonly NodeInfoParser $nodeInfoParser,
     ) {
         parent::__construct();
@@ -38,21 +43,23 @@ final class RunCommand extends Command
             assert(is_int($lastRepliableTime));
         }
 
-        //        $community = $this->api->community()->get('bot_playground@lemmings.world');
+        $community = $this->api->community()->get('bot_playground@lemmings.world');
 
         $comments = $this->api->comment()->getComments(
-            //            community: $community,
+            community: $community,
             limit: $this->commentLimit,
             sortType: CommentSortType::New,
             listingType: ListingType::All,
         );
 
         $posts = $this->api->post()->getPosts(
-            //            community: $community,
+            community: $community,
             limit: $this->postLimit,
             sort: SortType::New,
             listingType: ListingType::All
         );
+
+        $this->handleMentions();
 
         $newLastRepliableTime = $lastRepliableTime;
 
@@ -97,5 +104,42 @@ final class RunCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function handleMentions(): void
+    {
+        $mentions = $this->api->currentUser()->getMentions(
+            unreadOnly: true,
+        );
+
+        foreach ($mentions as $mention) {
+            $path = $mention->comment->path;
+            $parentPath = implode('.', array_slice(explode('.', $path), 0, -1));
+            if ($parentPath === '0') {
+                $parent = $mention->post;
+            } else {
+                $comment = array_values(array_filter(
+                    $this->api->comment()->getComments(post: $mention->post),
+                    static fn (CommentView $comment) => $comment->comment->path === $parentPath,
+                ))[0] ?? null;
+                $parent = $comment?->comment;
+                if ($parent === null) {
+                    // todo handle
+                    continue;
+                }
+            }
+
+            assert($parent instanceof Comment || $parent instanceof Post); // @phpstan-ignore-line
+
+            $text = $parent instanceof Comment ? $parent->content : $parent->body;
+
+            $userInstance = parse_url($mention->creator->actorId, PHP_URL_HOST);
+            assert(is_string($userInstance));
+            $this->mentionHandlers->handle(
+                $text,
+                $mention->comment,
+                $userInstance,
+            );
+        }
     }
 }

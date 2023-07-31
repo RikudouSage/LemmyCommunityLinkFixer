@@ -38,7 +38,7 @@ final readonly class LemmyKbinReplyHandler implements ReplyHandler
             return;
         }
 
-        $fixedLinks = $this->commentParser->findFixedLinks($text);
+        $fixedLinks = $this->commentParser->findFixedCommunityLinks($text);
         $fixedLinks = array_filter($fixedLinks, fn (string $link) => $this->nodeInfoParser->getSoftware("lemmy://{$link}") === 'lemmy');
         if (!count($fixedLinks)) {
             return;

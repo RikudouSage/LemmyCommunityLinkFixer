@@ -38,12 +38,12 @@ final readonly class MastodonFriendicaReplyHandler implements ReplyHandler
         }
 
         $currentCommunityUrl = $repliable->community->actorId;
-        $fixedCurrentUrl = $this->commentParser->findFixedLinks($currentCommunityUrl)[0] ?? null;
+        $fixedCurrentUrl = $this->commentParser->findFixedCommunityLinks($currentCommunityUrl)[0] ?? null;
         if ($fixedCurrentUrl === null) {
             return;
         }
 
-        $fixedLinks = $this->commentParser->findFixedLinks($text);
+        $fixedLinks = $this->commentParser->findFixedCommunityLinks($text);
         $fixedLinks = array_filter(
             $fixedLinks,
             fn (string $link)
