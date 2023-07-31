@@ -119,7 +119,7 @@ final class RunCommand extends Command
                 $parent = $mention->post;
             } else {
                 $comment = array_values(array_filter(
-                    $this->api->comment()->getComments(post: $mention->post),
+                    $this->api->comment()->getComments(post: $mention->post, sortType: CommentSortType::New),
                     static fn (CommentView $comment) => $comment->comment->path === $parentPath,
                 ))[0] ?? null;
                 $parent = $comment?->comment;
