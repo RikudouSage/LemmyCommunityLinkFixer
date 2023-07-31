@@ -5,6 +5,7 @@ namespace App\Service\Handler;
 use App\Service\CommentParser;
 use App\Service\NodeInfoParser;
 use Rikudou\LemmyApi\Enum\Language;
+use Rikudou\LemmyApi\Exception\LanguageNotAllowedException;
 use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\View\CommentView;
 use Rikudou\LemmyApi\Response\View\PostView;
@@ -54,12 +55,23 @@ final readonly class MastodonFriendicaReplyHandler implements ReplyHandler
             return;
         }
         $response = 'Hi there! Your text contains links to other Lemmy communities, here are correct links for Lemmy users: %s';
-        $this->api->comment()->create(
-            post: $repliable->post,
-            content: sprintf($response, implode(', ', $fixedLinks)),
-            language: Language::English,
-            parent: $repliable instanceof CommentView ? $repliable->comment : null,
-        );
+        $response = sprintf($response, implode(', ', $fixedLinks));
+
+        try {
+            $this->api->comment()->create(
+                post: $repliable->post,
+                content: $response,
+                language: Language::English,
+                parent: $repliable instanceof CommentView ? $repliable->comment : null,
+            );
+        } catch (LanguageNotAllowedException) {
+            $this->api->comment()->create(
+                post: $repliable->post,
+                content: $response,
+                language: Language::Undetermined,
+                parent: $repliable instanceof CommentView ? $repliable->comment : null,
+            );
+        }
 
         $replyUrl = $repliable instanceof PostView
             ? "https://lemmings.world/post/{$repliable->post->id}"

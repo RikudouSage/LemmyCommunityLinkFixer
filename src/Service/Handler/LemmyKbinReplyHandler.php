@@ -5,6 +5,7 @@ namespace App\Service\Handler;
 use App\Service\CommentParser;
 use App\Service\NodeInfoParser;
 use Rikudou\LemmyApi\Enum\Language;
+use Rikudou\LemmyApi\Exception\LanguageNotAllowedException;
 use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\View\CommentView;
 use Rikudou\LemmyApi\Response\View\PostView;
@@ -44,12 +45,23 @@ final readonly class LemmyKbinReplyHandler implements ReplyHandler
             return;
         }
         $response = "Hi there! Looks like you linked to a Lemmy community using a URL instead of its name, which doesn't work well for people on different instances. Try fixing it like this: %s";
-        $this->api->comment()->create(
-            post: $repliable->post,
-            content: sprintf($response, implode(', ', $fixedLinks)),
-            language: Language::English,
-            parent: $repliable instanceof CommentView ? $repliable->comment : null,
-        );
+        $response = sprintf($response, implode(', ', $fixedLinks));
+
+        try {
+            $this->api->comment()->create(
+                post: $repliable->post,
+                content: $response,
+                language: Language::English,
+                parent: $repliable instanceof CommentView ? $repliable->comment : null,
+            );
+        } catch (LanguageNotAllowedException) {
+            $this->api->comment()->create(
+                post: $repliable->post,
+                content: $response,
+                language: Language::Undetermined,
+                parent: $repliable instanceof CommentView ? $repliable->comment : null,
+            );
+        }
 
         $replyUrl = $repliable instanceof PostView
             ? "https://lemmings.world/post/{$repliable->post->id}"

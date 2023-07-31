@@ -9,6 +9,7 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Rikudou\LemmyApi\DefaultLemmyApi;
 use Rikudou\LemmyApi\Enum\Language;
 use Rikudou\LemmyApi\Enum\LemmyApiVersion;
+use Rikudou\LemmyApi\Exception\LanguageNotAllowedException;
 use Rikudou\LemmyApi\Exception\LemmyApiException;
 use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\Model\Comment;
@@ -87,12 +88,23 @@ final readonly class CommentLinksAndPostLinksMentionHandler implements MentionHa
         }
 
         if (!count($substitutions)) {
-            $this->api->comment()->create(
-                post: $replyTo->postId,
-                content: "Sadly I failed to fetch the correct links. Possibly because no one from your instance is subscribed to the community this comment originates from.\n\nYou may contact @rikudou@lemmings.world and he will check what went wrong.",
-                language: Language::English,
-                parent: $replyTo,
-            );
+            $reply = "Sadly I failed to fetch the correct links. Possibly because no one from your instance is subscribed to the community this comment originates from.\n\nYou may contact @rikudou@lemmings.world and he will check what went wrong.";
+
+            try {
+                $this->api->comment()->create(
+                    post: $replyTo->postId,
+                    content: $reply,
+                    language: Language::English,
+                    parent: $replyTo,
+                );
+            } catch (LanguageNotAllowedException) {
+                $this->api->comment()->create(
+                    post: $replyTo->postId,
+                    content: $reply,
+                    language: Language::Undetermined,
+                    parent: $replyTo,
+                );
+            }
 
             return;
         }
@@ -125,12 +137,21 @@ final readonly class CommentLinksAndPostLinksMentionHandler implements MentionHa
             }
         }
 
-        $this->api->comment()->create(
-            post: $replyTo->postId,
-            content: $reply,
-            language: Language::English,
-            parent: $replyTo,
-        );
+        try {
+            $this->api->comment()->create(
+                post: $replyTo->postId,
+                content: $reply,
+                language: Language::English,
+                parent: $replyTo,
+            );
+        } catch (LanguageNotAllowedException) {
+            $this->api->comment()->create(
+                post: $replyTo->postId,
+                content: $reply,
+                language: Language::Undetermined,
+                parent: $replyTo,
+            );
+        }
     }
 
     private function filterValidTargets(string $link): bool

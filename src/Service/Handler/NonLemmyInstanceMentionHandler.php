@@ -5,6 +5,7 @@ namespace App\Service\Handler;
 use App\Service\CommentParser;
 use App\Service\NodeInfoParser;
 use Rikudou\LemmyApi\Enum\Language;
+use Rikudou\LemmyApi\Exception\LanguageNotAllowedException;
 use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\Model\Comment;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
@@ -44,11 +45,22 @@ final readonly class NonLemmyInstanceMentionHandler implements MentionHandler
         $links = [...$this->commentParser->getPostLinks($text), ...$this->commentParser->getCommentLinks($text)];
         $links = implode(', ', $links);
 
-        $this->api->comment()->create(
-            post: $replyTo->postId,
-            content: "While it looks like the links ({$links}) might lead to a Lemmy instance, none of them actually do.",
-            language: Language::English,
-            parent: $replyTo
-        );
+        $response = "While it looks like the links ({$links}) might lead to a Lemmy instance, none of them actually do.";
+
+        try {
+            $this->api->comment()->create(
+                post: $replyTo->postId,
+                content: $response,
+                language: Language::English,
+                parent: $replyTo
+            );
+        } catch (LanguageNotAllowedException) {
+            $this->api->comment()->create(
+                post: $replyTo->postId,
+                content: $response,
+                language: Language::Undetermined,
+                parent: $replyTo
+            );
+        }
     }
 }

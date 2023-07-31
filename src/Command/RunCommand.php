@@ -10,6 +10,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Rikudou\LemmyApi\Enum\CommentSortType;
 use Rikudou\LemmyApi\Enum\ListingType;
 use Rikudou\LemmyApi\Enum\SortType;
+use Rikudou\LemmyApi\Exception\LanguageNotAllowedException;
 use Rikudou\LemmyApi\LemmyApi;
 use Rikudou\LemmyApi\Response\Model\Comment;
 use Rikudou\LemmyApi\Response\Model\Post;
@@ -135,11 +136,17 @@ final class RunCommand extends Command
 
             $userInstance = parse_url($mention->creator->actorId, PHP_URL_HOST);
             assert(is_string($userInstance));
-            $this->mentionHandlers->handle(
-                $text,
-                $mention->comment,
-                $userInstance,
-            );
+
+            try {
+                $this->mentionHandlers->handle(
+                    $text,
+                    $mention->comment,
+                    $userInstance,
+                );
+            } catch (LanguageNotAllowedException) {
+                // ignore
+            }
+            $this->api->currentUser()->markMentionAsRead($mention->personMention);
         }
     }
 }
