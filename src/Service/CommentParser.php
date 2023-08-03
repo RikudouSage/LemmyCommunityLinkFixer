@@ -11,7 +11,7 @@ final class CommentParser
      */
     public function findFixedCommunityLinks(string $text): array
     {
-        $regex = '#https://(?<DomainName>[^.]+\.[^/]+)/c/(?<CommunitySlug>[a-z0-9_]+)(?<ExistingCommunitySlug>@[^.]+\.\S+)?#';
+        $regex = '#https://(?<DomainName>[^.]+\.[^/]+)/c/(?<CommunitySlug>[a-z0-9_]+)(?<ExistingCommunitySlug>@[^.]+\.[^\s?]+)?#';
         if (!preg_match_all($regex, $text, $regexMatches)) {
             return [];
         }
